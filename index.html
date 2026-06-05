@@ -1706,11 +1706,29 @@ RÈGLES :
     if (box) box.scrollTop = box.scrollHeight;
   }
 
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function mdToHtml(text) {
+    // On échappe d'abord pour la sécurité, puis on réintroduit le formatage simple
+    let s = escapeHtml(text);
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');   // **gras**
+    s = s.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>'); // *italique*
+    s = s.replace(/\n/g, '<br>');                               // sauts de ligne
+    return s;
+  }
+
   function addMsg(text, role) {
     const box = document.getElementById('chat-messages');
     const div = document.createElement('div');
     div.className = 'msg msg-' + role;
-    div.innerHTML = text;
+    // Le bot peut renvoyer du markdown : on le convertit. Les autres messages restent en texte simple.
+    if (role === 'bot') {
+      div.innerHTML = mdToHtml(text);
+    } else {
+      div.textContent = text;
+    }
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
     return div;
@@ -1759,7 +1777,7 @@ RÈGLES :
 
     } catch (e) {
       typing.remove();
-      addMsg("Une erreur est survenue. Contactez-nous directement à <strong>contacts.aj19@gmail.com</strong>", 'bot');
+      addMsg("Une erreur est survenue. Contactez-nous directement à **contacts.aj19@gmail.com**", 'bot');
     }
 
     sendBtn.disabled = false;
